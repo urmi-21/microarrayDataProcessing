@@ -12,3 +12,8 @@ Y <-eset[, 2]
 M <- Y-X
 A <- (Y + X) / 2
 plot(A,M,main= 'default M-A plot',pch= 16,cex = 0.1);abline(h = 0)
+
+pc <- prcomp(t(eset))
+names(pc)
+group <- as.numeric(colnames(eset))
+plot(pc$x[, 1], pc$x[, 2], main = "PCA", xlab = "PC1", ylab = "PC2",col=c(1,2,3,4))
