@@ -18,6 +18,7 @@ affy.data = ReadAffy(filenames = files)
 
 #apply gcrma
 eset <- gcrma(affy.data)
+eset<-
 thisPD<-pData(eset)
 thisExp<-exprs(eset)
 dim(thisExp)
@@ -76,10 +77,20 @@ ggbiplot(esetPCA, obs.scale = 1, var.scale = 1,
 
 
 
+#manually give batch info
+write_tsv(celData,"celData.tsv")
+#read new batch infor
+celDataNew <- read_delim("celData.tsv", "\t",   escape_double = FALSE, trim_ws = TRUE)
 
-
-
-
+batch<-celDataNew$batchId  
+#correct with combat
+# parametric adjustment
+combat_edata1 = ComBat(dat=thisExp, batch=batch, mod=NULL, par.prior=TRUE, prior.plots=FALSE)
+dim(combat_edata1)
+colnames(combat_edata1)
+colnames(thisExp)
+boxplot(thisExp)
+boxplot(combat_edata1)
 
 #ref: https://support.bioconductor.org/p/47350/
 cleaningY = function(y, mod, svaobj) {

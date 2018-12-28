@@ -58,6 +58,6 @@ plot(fitsv$coefficients[2,], fit$coefficients[2,],col=2,
      xlab="SVA",ylab="linear model",xlim=c(-5,5),ylim=c(-5,5))
 abline(c(0,1),col=1,lwd=3)
 
-
+par(mfrow=c(1,1))
 
 
