@@ -42,7 +42,7 @@ for(id in idlist){
 celData<-celData %>% mutate(batchId=as.numeric(factor(celData$Exp)))
 
 #read all cel files downloaded
-files = list.files(pattern = "\\.CEL$", full.names = TRUE)
+files = list.files(pattern = "\\.CEL$", full.names = TRUE,ignore.case = T)
 affy.data = ReadAffy(filenames = files)
 
 #apply gcrma
