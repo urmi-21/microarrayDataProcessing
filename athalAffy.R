@@ -5,6 +5,10 @@ library(gcrma)
 library(arrayQualityMetrics)
 library(readr)
 library(ggbiplot)
+library(sva)
+library(ggplot2)
+library(exploBATCH)
+
 #query
 #ATsets = queryAE(species = "Arabidopsis+thaliana")
 #keep ones with raw data
@@ -26,27 +30,19 @@ for(id in idlist){
   atSamp = getAE(id, type = "raw")
   thisRawList<-atSamp$rawFiles
   #if there are no .cel files
-  celInd<-grep("\\.CEL$",thisRawList)
+  celInd<-grep("\\.CEL$",thisRawList,ignore.case = T)
   if(length(celInd)<1){
     print("Err")
     failed<-c(failed,id)
   }else{
     celData<-bind_rows(celData,data.frame(Exp=rep(id,length(thisRawList)),Cel=thisRawList))
-    
-    #read data
-    #affy.data = ReadAffy(filenames = thisRawList)
-    #apply gcrma
-    #eset <- gcrma(affy.data)
-    #get metadata
-    #thisPD<-pData(eset)
-    #get expression
-    #thisExp<-exprs(eset)
   }
 }
 
+celData<-celData %>% mutate(batchId=as.numeric(factor(celData$Exp)))
+
 #read all cel files downloaded
 files = list.files(pattern = "\\.CEL$", full.names = TRUE)
-#files = list.files("celfiles2/", full.names = TRUE)
 affy.data = ReadAffy(filenames = files)
 
 #apply gcrma
@@ -58,15 +54,31 @@ dim(thisExp)
 thisExplog<-log2(thisExp)
 dim(thisExplog)
 
+
 #apply PCA to identify batch affects
 tData<-t(thisExp) #changes dimention ???
 dim(tData)
 
 tDatalog<-t(thisExplog)
 dim(tDatalog)
+#
+
+
 #filter to remove 0 variance cols (genes)
 tDatalogF <- tDatalog[,apply(tDatalog, 2, var, na.rm=TRUE) != 0]
 dim(tDatalogF)
+#see dist of corr vals
+corrmat<-cor(tDatalogF)
+dim(corrmat)
+corrVec<-data.frame(cors=as.vector(corrmat[upper.tri(corrmat,diag = F)]))
+sd<-head(corrVec,1000000)
+p<-ggplot(data = corrVec,aes(x=cors))+ geom_histogram(bins = 10,colour="black", fill="white")
+
+pdf("plot_nobatchcorr.pdf")
+print(p)
+dev.off()
+
+
 esetPCA<-prcomp(tDatalogF, scale. = TRUE)
 
 
@@ -75,6 +87,28 @@ ggbiplot(esetPCA, obs.scale = 1, var.scale = 1,
   scale_color_discrete(name = '') +
   theme(legend.direction = 'horizontal', legend.position = 'top')
 
+#perform batch correction
+batch = celData$Exp
+
+# parametric adjustment
+combat_edata1 = ComBat(dat=thisExp, batch=batch, mod=NULL, par.prior=TRUE, prior.plots=FALSE)
+dim(combat_edata1)
+tDatalog<-t(log2(combat_edata1+1))
+dim(tDatalog)
+#filter to remove 0 variance cols (genes)
+tDatalogF <- tDatalog[,apply(tDatalog, 2, var, na.rm=TRUE) != 0]
+dim(tDatalogF)
+esetPCA<-prcomp(tDatalogF, scale. = TRUE)
+corrmat<-cor(tDatalog)
+# non-parametric adjustment, mean-only version
+combat_edata2 = ComBat(dat=thisExp, batch=batch, mod=NULL, par.prior=FALSE, mean.only=TRUE)
+dim(combat_edata2)
+tDatalog<-t(log2(combat_edata2))
+dim(tDatalog)
+#filter to remove 0 variance cols (genes)
+tDatalogF <- tDatalog[,apply(tDatalog, 2, var, na.rm=TRUE) != 0]
+dim(tDatalogF)
+esetPCA<-prcomp(tDatalogF, scale. = TRUE)
 
 
 
@@ -91,3 +125,38 @@ ggbiplot(wine.pca, obs.scale = 1, var.scale = 1,
          groups = wine.class, ellipse = TRUE, circle = TRUE,varname.size=0) +
   scale_color_discrete(name = '') +
   theme(legend.direction = 'horizontal', legend.position = 'top')
+
+
+
+
+#explobatch
+require(exploBATCH)
+require(exploBATCHbreast)  # the package with breast cancer dataset
+data(Breast)               # load the breast cancer data        
+data(batchBreast)          # load the variable defining batches 
+
+
+expBATCH(
+  D=Breast,              # the breast cancer expression data matrix
+  batchCL=batchBreast,   # the variable identifying the three batches
+  Conf=NA,               # no biological variable of interest in this example
+  mindim=2,              # the minimum number of pPCs
+  maxdim=9,              # the maximum number of pPCs, we don't want this argument to be large,   
+  # otherwise it will slow down exploBATCH.
+  method="ppcca",        # use correctBATCH as well as ComBat to correct batch effect
+  SDselect=2             # set SD at 2 to reduce computational time.
+)
+
+#Batch should be numeric
+
+expBATCH(
+  D=tData,              # the breast cancer expression data matrix
+  batchCL=as.numeric(factor(celData$Exp)),   # the variable identifying the three batches
+  Conf=NA,               # no biological variable of interest in this example
+  mindim=2,              # the minimum number of pPCs
+  maxdim=9,              # the maximum number of pPCs, we don't want this argument to be large,   
+  # otherwise it will slow down exploBATCH.
+  method="ppcca",        # use correctBATCH as well as ComBat to correct batch effect
+  SDselect=0             # set SD at 2 to reduce computational time.
+)
+
