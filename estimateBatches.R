@@ -3,6 +3,7 @@ library(purrr)
 library(text2vec)
 library(stringr)
 library('lsa')
+library(cluster)
 #script to estimate batches from metadata
 
 #Read all idf and sdrf files
@@ -77,7 +78,7 @@ d1_d2_cos_sim[1:2, 1:5]
 #########compute similarity of rows################
 
 
-f1<-sdrf[[1]]
+f1<-sdrf[[2]]
 
 #1 remove columns with no information
 f1<-Filter(function(x)(length(unique(x))>1), f1)
@@ -87,14 +88,41 @@ dir.create(td)
 for(i in 1:nrow(f1)){
   write( as.character(f1[i,]), file=paste(td, paste("R",i,sep=""), sep="/"))
 }
-myMatrix = textmatrix(td, minWordLength=1)
+myMatrix = textmatrix(td, minWordLength=2)
 sim<-cosine(myMatrix)
 boxplot(sim)
 
 
 
+HC=hclust(as.dist(1-sim), method="single")
+cutree(HC,k=3)
+
+plot(HC, cex = 0.6)
+rect.hclust(HC, k = 4, border = 2:5)
+
+kmeanclust <- kmeans(sim,3)
+
+kmeanclust$cluster
+
+fviz_cluster(kmeanclust, data = sim, geom = "point",
+             stand = FALSE, frame.type = "norm")
+#elbow method
+fviz_nbclust(sim, kmeans, method = "wss") +
+  geom_vline(xintercept = 3, linetype = 2)
+
+#gap stat
+
+gap_stat <- clusGap(sim, FUN = kmeans, nstart = 25,
+                    K.max = 10, B = 50)
+k <- maxSE(gap_stat$Tab[, "gap"], gap_stat$Tab[, "SE.sim"], method="Tibs2001SEmax")
+
+fviz_gap_stat(gap_stat)
 
 
-createDoc<-function(row){
-  
-}
+
+
+library(tidyverse)  # data manipulation
+library(cluster)    # clustering algorithms
+library(factoextra) # clustering visualization
+library(dendextend) # for comparing two dendrograms
+library(NbClust)
