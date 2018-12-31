@@ -18,6 +18,8 @@ AT_AE_Experiments_181227_014344 <- read_delim("ArrayExpress-Experiments-181227-1
                                                      "\t", escape_double = FALSE, trim_ws = TRUE)
 ATsetsfiltered<-AT_AE_Experiments_181227_014344 %>% filter(tolower(Organism)=="arabidopsis thaliana") %>% filter(`Raw Data`!="Data is not available") %>% filter(Assays >4)
 
+ATsetsfiltered_10<-ATsetsfiltered%>% filter(Assays >9)
+
 smallATset<-head(ATsetsfiltered)
 
 #download all .cel files
@@ -159,4 +161,23 @@ expBATCH(
   method="ppcca",        # use correctBATCH as well as ComBat to correct batch effect
   SDselect=0             # set SD at 2 to reduce computational time.
 )
+
+
+
+
+#filter good files
+celData <- read_delim("C:/Users/mrbai/Desktop/celData.tsv", 
+                      "\t", escape_double = FALSE, trim_ws = TRUE)
+toKeepExp<-ATsetsfiltered_10$Accession
+
+celData_toKeep<-celData[celData$Exp %in% toKeepExp,]
+length(unique(celData_toKeep$Exp))
+length(unique(toKeepExp))
+goodfiles <- read_csv("C:/Users/mrbai/Desktop/goodfiles.csv")
+goodfiles$x<-substr(goodfiles$x,3,nchar(goodfiles$x))
+celData_toKeep<-celData_toKeep[celData_toKeep$Cel %in% goodfiles$x,]
+write.csv(celData_toKeep,"celDataReduced.csv",row.names = F)
+
+celData_toKeep$Cel<-paste("./",celData_toKeep$Cel,sep = "")
+write.csv(celData_toKeep$Cel,"goodFilesReduced.csv",row.names = F)
 
