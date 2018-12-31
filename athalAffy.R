@@ -20,6 +20,8 @@ ATsetsfiltered<-AT_AE_Experiments_181227_014344 %>% filter(tolower(Organism)=="a
 
 ATsetsfiltered_10<-ATsetsfiltered%>% filter(Assays >9)
 
+ATsetsfiltered_10_100<-ATsetsfiltered%>% filter(Assays >9) %>% filter(Assays <101)
+sum(ATsetsfiltered_5_100$Assays)
 smallATset<-head(ATsetsfiltered)
 
 #download all .cel files
@@ -181,3 +183,12 @@ write.csv(celData_toKeep,"celDataReduced.csv",row.names = F)
 celData_toKeep$Cel<-paste("./",celData_toKeep$Cel,sep = "")
 write.csv(celData_toKeep$Cel,"goodFilesReduced.csv",row.names = F)
 
+#zip files coressponding to exps
+zipList <- read_csv("zipList.txt", col_names = FALSE)
+#filter zip list which matches accession in ATsetsfiltered_10_100
+zipList$X1<-substr(zipList$X1,3,nchar(zipList$X1))
+zipList$X2<-sapply(strsplit(as.character(zipList$X1), ".raw"), "[[", 1)
+
+filterZipList<- zipList[zipList$X2 %in% ATsetsfiltered_10_100$Accession,]
+write_tsv(filterZipList,"zipList_10_100.tsv")
+length(unique(filterZipList$X1))
