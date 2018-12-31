@@ -2,12 +2,12 @@ library("ArrayExpress")
 library(affy)
 library(dplyr)
 library(gcrma)
-library(arrayQualityMetrics)
 library(readr)
 library(ggbiplot)
 library(sva)
 library(ggplot2)
 library(exploBATCH)
+library(arrayQualityMetrics)
 
 #query
 #ATsets = queryAE(species = "Arabidopsis+thaliana")
