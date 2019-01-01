@@ -22,6 +22,7 @@ ATsetsfiltered_10<-ATsetsfiltered%>% filter(Assays >9)
 
 ATsetsfiltered_10_100<-ATsetsfiltered%>% filter(Assays >9) %>% filter(Assays <101)
 sum(ATsetsfiltered_5_100$Assays)
+
 smallATset<-head(ATsetsfiltered)
 
 #download all .cel files
@@ -192,3 +193,7 @@ zipList$X2<-sapply(strsplit(as.character(zipList$X1), ".raw"), "[[", 1)
 filterZipList<- zipList[zipList$X2 %in% ATsetsfiltered_10_100$Accession,]
 write_tsv(filterZipList,"zipList_10_100.tsv")
 length(unique(filterZipList$X1))
+
+#final celdata for 10_100 excluding failed to download files
+celData_10_100<- celData[celData$Exp %in% unique(filterZipList$X2),]
+
