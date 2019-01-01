@@ -54,6 +54,7 @@ affy.data = ReadAffy(filenames = files)
 eset <- gcrma(affy.data)
 thisPD<-pData(eset)
 thisExp<-exprs(eset)
+save.image("eset.RData")
 dim(thisExp)
 #log 2 normalize
 thisExplog<-log2(thisExp)
