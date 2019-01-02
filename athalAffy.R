@@ -21,7 +21,14 @@ ATsetsfiltered<-AT_AE_Experiments_181227_014344 %>% filter(tolower(Organism)=="a
 ATsetsfiltered_10<-ATsetsfiltered%>% filter(Assays >9)
 
 ATsetsfiltered_10_100<-ATsetsfiltered%>% filter(Assays >9) %>% filter(Assays <101)
-sum(ATsetsfiltered_5_100$Assays)
+sum(ATsetsfiltered_10_100$Assays)
+
+ATsetsfiltered_10_50<-ATsetsfiltered%>% filter(Assays >9) %>% filter(Assays <51)
+sum(ATsetsfiltered_10_50$Assays)
+
+ATsetsfiltered_10_50_2010 <- ATsetsfiltered_10_50 %>% filter(`Release Date` >= as.Date("2010-01-01"))
+sum(ATsetsfiltered_10_50_2010$Assays)
+write.csv(ATsetsfiltered_10_50_2010$Accession,"ATsetsfiltered_10_50_2010_Exp.csv",row.names = F)
 
 smallATset<-head(ATsetsfiltered)
 
