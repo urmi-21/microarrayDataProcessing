@@ -13,10 +13,7 @@ makeasChar<-function(listOfDF){
     tfile<-tfile[,1:2]
     ttfile<-data.frame(t(tfile))
     colnames(ttfile)<- as.character(unlist(ttfile[1,]))
-    
-    
-   
-    
+    ttfile<-ttfile[-1,]
     listOfDF[[i]]<-ttfile
     
   }
@@ -28,3 +25,4 @@ makeasChar<-function(listOfDF){
 #megre sdrf files downloaded from arrayexpress
 df_idf<-list.files(full.names = TRUE,path = "idfDir/", pattern = "*.txt") %>% lapply(read_tsv,col_names = F)%>% makeasChar %>% bind_rows()
 
+write_tsv(df_idf,"idf_summary.tsv")
