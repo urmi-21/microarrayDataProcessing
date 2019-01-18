@@ -26,3 +26,13 @@ makeasChar<-function(listOfDF){
 df_idf<-list.files(full.names = TRUE,path = "idfDir/", pattern = "*.txt") %>% lapply(read_tsv,col_names = F)%>% makeasChar %>% bind_rows()
 
 write_tsv(df_idf,"idf_summary.tsv")
+
+#read and join idf and sdrf
+combined_srdf_Summary <- read_delim("~/Downloads/Immuno-Navigator_datasets/human/combined_srdf_Summary.tsv", 
+                                    "\t", escape_double = FALSE, trim_ws = TRUE)
+idf_summary <- read_delim("~/Downloads/Immuno-Navigator_datasets/human/idf_summary.tsv", 
+                          "\t", escape_double = FALSE, trim_ws = TRUE)
+
+combinedMD<- inner_join(idf_summary,combined_srdf_Summary)
+
+write_tsv(combinedMD,"combined_metadata.tsv")
