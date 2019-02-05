@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb  5 10:47:27 2019
+
+@author: mrbai
+[1] input file (from MOG)
+[2] output file
+
+"""
+
+
 import markov_clustering as mc
 import networkx as nx
 import random
@@ -38,14 +49,14 @@ for i in range(len(nameDict)):
 #print (dList)
 
 print("Converting to sparse mat")
-thresh=0.5
+thresh=0.6
 for l in data:
         #print (l)
         thisList=[]
         temp=l.split("\t")
         thisRow=nameDict[temp[0]]
         thisCol=nameDict[temp[1]]
-        if(float(temp[2])>0.5):
+        if(float(temp[2])>thresh):
                 edge=1
         else:
                 edge=0
@@ -59,7 +70,7 @@ spArr=sparse.csr_matrix(dList)
 print("Dim:"+str(spArr.shape))
 print("Running MCL")
 #choose inflation
-'''maxMod=-1
+maxMod=-1
 bestInf=2
 bestCluster=None
 for inflation in [i / 10 for i in range(15, 26)]:
@@ -71,13 +82,14 @@ for inflation in [i / 10 for i in range(15, 26)]:
                 maxMod=Q
                 bestInf=inflation
                 bestCluster=clusters
-
 clusters=bestCluster
 print("best inflation:"+str(bestInf))
 print("best modularity:"+str(maxMod))
+
 '''
 result = mc.run_mcl(spArr)           # run MCL with default parameters
 clusters = mc.get_clusters(result)
+'''
 
 #print(clusters)
 
@@ -96,8 +108,8 @@ for c in clusters:
 #print (clusterwithNames)
 
 #write to file
-print("writeing to file...")
-f=open(sys.argv[2]+"_inf_2","w")
+print("writing to file...")
+f=open(sys.argv[2]+"_inf_"+str(bestInf),"w")
 f.write("ClusterID\tGenes")
 for clid in clusterwithNames:
         thisList=clusterwithNames[clid]
@@ -106,4 +118,3 @@ for clid in clusterwithNames:
 f.close()
 
 print("writing to file...Done!!!")
-
