@@ -24,14 +24,14 @@ makeasChar<-function(listOfDF){
 
 cleanSdrf<-function(df){
   
-    df<-as.data.frame(df %>% mutate_all(as.character), stringsAsFactors=FALSE)
-    tfile<- df
-    tfile[is.na(tfile)]<-"NA"
-    tfile<-tfile[,1:2]
-    ttfile<-data.frame(t(tfile))
-    colnames(ttfile)<- as.character(unlist(ttfile[1,]))
-    ttfile<-ttfile[-1,]
-    return(ttfile)
+  df<-as.data.frame(df %>% mutate_all(as.character), stringsAsFactors=FALSE)
+  tfile<- df
+  tfile[is.na(tfile)]<-"NA"
+  tfile<-tfile[,1:2]
+  ttfile<-data.frame(t(tfile))
+  colnames(ttfile)<- as.character(unlist(ttfile[1,]))
+  ttfile<-ttfile[-1,]
+  return(ttfile)
 }
 
 #megre sdrf files downloaded from arrayexpress
@@ -45,6 +45,7 @@ write_tsv(df_idf,"idf_summary.tsv")
 flist<-list.files(full.names = TRUE,path = "idf/", pattern = "*.txt")
 
 listFiles<-list()
+k<-1
 for(f in flist){
   
   print(f)
@@ -52,13 +53,18 @@ for(f in flist){
   thisF<-read_tsv(f,col_names = F)
   #clean this F (transpose)
   thisF<-cleanSdrf(thisF)
-  
-  thisFname<-tools::file_path_sans_ext(basename(f))
+  thisFname<-tools::file_path_sans_ext(tools::file_path_sans_ext(basename(f)))
+  #remove duplicate columns
+  colnames(thisF)<-make.unique(colnames(thisF))
   #remove .idf
   thisF <- thisF %>% mutate(Accession=thisFname)
+  listFiles[[k]]<-thisF
+  k<-k+1
   
 }
 
+#bind rows
+df_idf<-bind_rows(listFiles)
 
 
 
