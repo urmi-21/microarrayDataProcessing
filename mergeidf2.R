@@ -53,6 +53,10 @@ for(f in flist){
   #clean this F (transpose)
   thisF<-cleanSdrf(thisF)
   
+  thisFname<-tools::file_path_sans_ext(basename(f))
+  #remove .idf
+  thisF <- thisF %>% mutate(Accession=thisFname)
+  
 }
 
 
