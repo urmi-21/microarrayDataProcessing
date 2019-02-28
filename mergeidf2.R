@@ -35,9 +35,9 @@ cleanSdrf<-function(df){
 }
 
 #megre sdrf files downloaded from arrayexpress
-df_idf<-list.files(full.names = TRUE,path = "idf/", pattern = "*.txt") %>% lapply(read_tsv,col_names = F)%>% makeasChar %>% bind_rows()
+#df_idf<-list.files(full.names = TRUE,path = "idf/", pattern = "*.txt") %>% lapply(read_tsv,col_names = F)%>% makeasChar %>% bind_rows()
 
-write_tsv(df_idf,"idf_summary.tsv")
+
 
 #add accession
 
@@ -65,9 +65,11 @@ for(f in flist){
 
 #bind rows
 df_idf<-bind_rows(listFiles)
+write_tsv(df_idf,"idf_summary.tsv")
 
 ##read sdrf
 #read all files
+# sdrf from E-MTAB-1264 has duplicated rows for the CEL files it was edited and duplicates were removed
 flistsdrf<-list.files(full.names = TRUE,path = "sdrf/", pattern = "*.txt")
 
 listFiles<-list()
@@ -77,7 +79,8 @@ for(f in flistsdrf){
   print(f)
   #read f and store in list
   thisF<-read_tsv(f,col_names = T)
-  thisFname<-tools::file_path_sans_ext(tools::file_path_sans_ext(basename(f)))
+  #thisFname<-tools::file_path_sans_ext(tools::file_path_sans_ext(basename(f)))
+  thisFname<-unlist(strsplit(basename(f), "." ,fixed = T))[1]
   #remove duplicate columns
   colnames(thisF)<-make.unique(colnames(thisF))
   #remove .idf
@@ -89,57 +92,86 @@ for(f in flistsdrf){
 
 #bind rows
 df_sdrf<-bind_rows(listFiles)
+#rename col
+colnames(df_sdrf)[which(colnames(df_sdrf)=="Array Data File")] <- "Array_Data_File"
+df_sdrf[is.na(df_sdrf)]<-"NA"
+#check all rows have Array Data File
+df_sdrf$`Source Name`[which(df_sdrf$Array_Data_File=="NA")]
+
+#extract useful info
+keyWords<-c("organism","cell","disease","treatment","arrayexpress","Array_Data_File","Material Type","Protocol","Sample","Description","Characteristics")
+
+colsToKeep<-grepl(paste(keyWords,collapse = "|"),colnames(df_sdrf),ignore.case = T)
+
+colsToKeep[which(colnames(df_sdrf)=="Accession")]=TRUE
+
+df_sdrf_final<-df_sdrf[,colsToKeep]
+
+#order by col name
+df_sdrf_final<-df_sdrf_final[,colnames(df_sdrf_final)[order(colnames(df_sdrf_final))]]
+#remove all cols with NA
+df_sdrf_final[df_sdrf_final=="NA"]<-NA
+df_sdrf_final[df_sdrf_final==""]<-NA
+df_sdrf_final2 <- df_sdrf_final[, colSums(is.na(df_sdrf_final)) < nrow(df_sdrf_final) ]
+
+#merge columns by keywords
+#init new df
+test<-data.frame()
+test<-as.data.frame(df_sdrf_final[,"Accession"])
+
+
+df_sdrf_final[is.na(df_sdrf_final)]<-""
+
+for(keyw in keyWords){
+  print(keyw)
+  thisColName<-paste(keyw,"Info",sep = "_")
+  thisCols<-colnames(df_sdrf_final)[grepl(keyw,colnames(df_sdrf_final),ignore.case = T)]
+  tempdf<-as.data.frame(df_sdrf_final[ , thisCols ])
+  test[,thisColName] <- apply( tempdf , 1 , function(row) paste(row[nzchar(row)], collapse = ";") )
+}
+
+#remove first column
+#test<-test[,c(2:ncol(test))]
+
+df_sdrf_final <- test %>% distinct
+
+df_sdrf_final<- df_sdrf_final %>% mutate(DataColum = paste(Accession,Array_Data_File_Info,sep = "_"))
+
+#duplicates
+df_sdrf_final$DataColum[duplicated(df_sdrf_final$DataColum)]
+
+#write to file
+write_tsv(df_sdrf_final,"sdrf_summary.tsv")
 
 
 
 
 
+combinedMD<- left_join(df_idf,df_sdrf_final)
+combinedMD <- combinedMD %>% distinct
 
-#read and join idf and sdrf
-combined_srdf_Summary <- read_delim("sdrf_summary.tsv", 
-                                    "\t", escape_double = FALSE, trim_ws = TRUE)
-idf_summary <- read_delim("idf_summary.tsv", 
-                          "\t", escape_double = FALSE, trim_ws = TRUE)
+#datacolumns in data
+Acc_to_Cel <- read_delim("Acc_to_Cel.txt", 
+                         "\t", escape_double = FALSE, trim_ws = TRUE)
 
+combinedMD<-combinedMD %>% filter(DataColum %in% Acc_to_Cel$Combined)
 
-colnames(combined_srdf_Summary)[ncol(combined_srdf_Summary)] <- "Cel"
+combinedMD <- data.frame(lapply(combinedMD, as.character), stringsAsFactors=FALSE)
 
-combined_srdf_Summary<-left_join(Acc_to_Cel,combined_srdf_Summary)
-
-#column 7 has accessions
-colnames(idf_summary)[7]<-"Exp"
-
-combinedMD<- inner_join(idf_summary,combined_srdf_Summary)
-
-#remove NA cols
-combinedMD2 <- combinedMD[, colSums(is.na(combinedMD)) < nrow(combinedMD) ]
-
-#remove repeated rows
-
-combinedMD3<- data.frame(lapply(combinedMD2,as.character),stringsAsFactors = F)
-
-combinedMD3[is.na(combinedMD3)] <- "NA"
-
-combinedMD3 <- combinedMD3 %>% distinct()
-
-
-
-#duplicated runids
-combinedMD3$Combined[duplicated(combinedMD3$Combined)]
+combinedMD[is.na(combinedMD)]<-"NA"
+combinedMD[combinedMD==""]<-"NA"
+combinedMD2 <- combinedMD %>% distinct
 
 
 
 
+repeatedDC <- as.data.frame(combinedMD$DataColum[duplicated(combinedMD$DataColum)])
 
 
-
-
-
-
-
-
-
-
-
+write_tsv(repeatedDC,"repeatedDC.tsv")
 
 write_tsv(combinedMD,"combined_metadata.tsv")
+
+
+
+
