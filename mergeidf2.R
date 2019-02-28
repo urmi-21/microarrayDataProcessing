@@ -66,6 +66,32 @@ for(f in flist){
 #bind rows
 df_idf<-bind_rows(listFiles)
 
+##read sdrf
+#read all files
+flistsdrf<-list.files(full.names = TRUE,path = "sdrf/", pattern = "*.txt")
+
+listFiles<-list()
+k<-1
+for(f in flistsdrf){
+  
+  print(f)
+  #read f and store in list
+  thisF<-read_tsv(f,col_names = T)
+  thisFname<-tools::file_path_sans_ext(tools::file_path_sans_ext(basename(f)))
+  #remove duplicate columns
+  colnames(thisF)<-make.unique(colnames(thisF))
+  #remove .idf
+  thisF <- thisF %>% mutate(Accession=thisFname)
+  thisF <- thisF %>% mutate_all(as.character)
+  listFiles[[k]]<-thisF
+  k<-k+1
+}
+
+#bind rows
+df_sdrf<-bind_rows(listFiles)
+
+
+
 
 
 
