@@ -92,7 +92,7 @@ ggbiplot(PCA, obs.scale = 1, var.scale = 1,
   theme(legend.direction = 'horizontal', legend.position = 'top')
 
 
-
+#run combat
 modcombat = model.matrix(~1, data=thisPD_4782)
 combat_edata = ComBat(dat=thisExp_4782, batch=batch, mod=modcombat, par.prior=TRUE, prior.plots=FALSE)
 cdataLogt<-t(log2(combat_edata))
