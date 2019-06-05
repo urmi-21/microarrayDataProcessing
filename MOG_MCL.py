@@ -6,7 +6,7 @@ Created on Tue Feb  5 10:47:27 2019
 [1] input file (from MOG)
 [2] output file
 
-Example input file
+Example input file:
 Tx  Tx  Correlation
 tx1 tx1 1.0000
 tx1 tx2 0.1322
