@@ -6,6 +6,18 @@ Created on Tue Feb  5 10:47:27 2019
 [1] input file (from MOG)
 [2] output file
 
+Example input file
+Tx  Tx  Correlation
+tx1 tx1 1.0000
+tx1 tx2 0.1322
+tx1 tx3 -0.0072
+tx1 tx4 -0.2158
+tx1 tx5 -0.1029
+tx1 tx6 0.1522
+tx1 tx7 0.1834
+tx1 tx8 0.0444
+tx1 tx9 -0.1598
+tx1 tx10    -0.0731
 """
 
 
