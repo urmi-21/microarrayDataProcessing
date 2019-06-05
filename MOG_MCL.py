@@ -61,6 +61,7 @@ for i in range(len(nameDict)):
 #print (dList)
 
 print("Converting to sparse mat")
+#set the threshold for adjacency matrix
 thresh=0.6
 for l in data:
         #print (l)
@@ -68,6 +69,7 @@ for l in data:
         temp=l.split("\t")
         thisRow=nameDict[temp[0]]
         thisCol=nameDict[temp[1]]
+        #values higher than threshold are 1 otherwise 0
         if(float(temp[2])>thresh):
                 edge=1
         else:
